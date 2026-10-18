@@ -1,0 +1,16 @@
+REWEAR ON YOUR DESKTOP
+
+1. Extract the entire ZIP into a folder on your Desktop.
+2. Install Node.js 24 from https://nodejs.org if it is not already installed.
+3. Windows: open desktop/START-REWEAR.bat.
+   Mac: open desktop/START-REWEAR.command.
+   If macOS prevents opening the command file, open Terminal in the extracted
+   Rewear folder and run: bash desktop/START-REWEAR.command
+4. Keep the terminal window open while using Rewear. The browser opens automatically;
+   if it opens before the app is ready, refresh after the terminal says Ready.
+5. Close the terminal or press Ctrl+C to stop the app.
+
+This runs Rewear on your own computer; it is not a hosted marketplace.
+The public interface opens without credentials. Accounts, real inventory and
+payments require the Supabase and Stripe configuration described in README.md.
+No sample inventory or simulated transactions are included.
