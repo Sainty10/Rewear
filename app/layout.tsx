@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import "@fontsource/dm-sans/400.css";
+import "@fontsource/dm-sans/500.css";
+import "@fontsource/dm-sans/600.css";
+import "@fontsource/dm-sans/700.css";
+import "@fontsource/manrope/500.css";
+import "@fontsource/manrope/600.css";
+import "@fontsource/manrope/800.css";
 import "./globals.css";
 export const metadata: Metadata = {
   title: "Rewear — A little outgrown. A lot to love.",
@@ -10,6 +17,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
+        <a className="skip-link" href="#main-content">
+          Skip to content
+        </a>
         <header>
           <Link className="logo" href="/">
             rewear<span>→</span>
@@ -29,13 +39,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
         </header>
-        {children}
+        <div id="main-content" tabIndex={-1}>
+          {children}
+        </div>
         <footer>
           <Link className="logo" href="/">
             rewear→
           </Link>
           <p>Good clothes deserve another chapter.</p>
           <div>Family first. Pre-loved always.</div>
+          <div className="footer-links">
+            <Link href="/how-it-works">How it works & fees</Link>
+            <Link href="/safety">Buying, selling & safety</Link>
+          </div>
           <p className="muted">
             An early marketplace · Payments use Stripe test mode
           </p>

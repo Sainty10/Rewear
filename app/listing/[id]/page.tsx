@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { BundleItem } from "@/lib/domain";
 import { notFound } from "next/navigation";
 import { configured, db } from "@/lib/supabase";
 import { money } from "@/lib/inventory";
@@ -49,7 +50,11 @@ export default async function Listing({
           </div>
           <h1>{l.title}</h1>
           <strong className="price">{money(l.price_pence)}</strong>
-          <p className="muted">Entire bundle · No shipping charge included</p>
+          <p className="muted">
+            {money(l.price_pence / l.quantity)} per piece · {l.quantity} pieces
+            <br />
+            Entire bundle · No shipping charge included
+          </p>
           <div className="facts">
             {[
               ["Size", l.size],
@@ -64,6 +69,23 @@ export default async function Listing({
             ))}
           </div>
           <p className="pre-wrap">{l.description}</p>
+          {l.items?.length > 0 && (
+            <section className="bundle-contents">
+              <h2>Exactly what’s inside · {l.quantity} pieces</h2>
+              {(l.items as BundleItem[]).map((item, i) => (
+                <article key={i} className="bundle-content-row">
+                  <strong>
+                    {item.quantity} × {item.name}
+                  </strong>
+                  <p>
+                    {item.size} · {item.brand}
+                  </p>
+                  <span className="badge">{item.condition}</span>
+                  {item.notes && <p className="pre-wrap">{item.notes}</p>}
+                </article>
+              ))}
+            </section>
+          )}
           <Link className="text-link" href={`/shop/${seller?.id}`}>
             From {seller?.display_name} →
           </Link>
@@ -72,6 +94,11 @@ export default async function Listing({
               ? "Seller-verified listing. Check all details and ask questions before buying."
               : `This bundle is ${l.status}.`}
           </div>
+          {user?.id === l.seller_id && l.status === "active" && (
+            <Link className="button light" href={`/sell/${l.id}`}>
+              Edit this bundle →
+            </Link>
+          )}
           {user && user.id !== l.seller_id && l.status === "active" ? (
             <>
               <form action="/api/checkout" method="post" className="stack">
@@ -95,7 +122,7 @@ export default async function Listing({
                 </button>
               </form>
               {!seller?.charges_enabled && (
-                <small>Seller payment onboarding is incomplete.</small>
+                <small>This seller is not ready to take payments yet.</small>
               )}
               <form className="inline-form" action="/api/actions" method="post">
                 <input type="hidden" name="action" value="offer" />

@@ -2,6 +2,14 @@
 
 A mobile-first family clothing bundle marketplace built with Next.js App Router, TypeScript, Supabase/PostgreSQL and Stripe Connect. The repository originally contained one blank file; this is the initial implementation, not a completed production launch.
 
+![Rewear website preview with the brighter palette](docs/website-preview.png)
+
+## Website launch
+
+See [the exact website-launch steps](docs/website-launch.md). Vercel hosts the Next.js website; Supabase provides accounts, PostgreSQL and photo storage. The `vercel.json` configuration is included. Deployment still requires signing into the account that owns the hosting project.
+
+The latest version adds a vibrant shared palette, a three-step seller workflow, item-by-item bundle contents, transparent price-per-piece/fee calculations, editable active listings, server-side price-per-piece sorting and authenticated payment recovery. Run **both migrations in order** for a new project; apply only the second if the first is already installed. Existing listings keep working, but need item details when edited. New listings must include a count-consistent contents breakdown.
+
 ## Run
 
 Node.js 24 is the tested runtime.
@@ -26,7 +34,7 @@ Playwright uses `/usr/bin/chromium` in this cloud environment. Set `PLAYWRIGHT_C
 
 ## Connect Supabase
 
-1. Create a dedicated development Supabase project. Apply [the initial migration](supabase/migrations/20261018000000_initial.sql) once in its SQL editor. It creates tables, constraints, private photo storage, RLS policies, atomic inventory reservation, throttles and webhook state transitions. The migration expects Supabase's existing `auth` and `storage` schemas; do not apply it to a plain database without those services.
+1. Create a dedicated development Supabase project. Apply [the initial migration](supabase/migrations/20261018000000_initial.sql), then [the bundle-details and recovery migration](supabase/migrations/20261018010000_bundle_details_and_recovery.sql), once each and in that order, in its SQL editor. It creates tables, constraints, private photo storage, RLS policies, atomic inventory reservation, throttles and webhook state transitions. The migration expects Supabase's existing `auth` and `storage` schemas; do not apply it to a plain database without those services.
 2. Put the project URL, legacy anon JWT key and service role key in the variables listed in `.env.example`. Only the anon key and project URL are public. Never expose the service role key to client code.
 3. Set the Auth Site URL to `APP_URL`. Add the exact `${APP_URL}/auth/callback` and password-reset callback URLs to allowed redirects. Enable email confirmation, a minimum 12-character password policy, Auth abuse controls and SMTP. The server refuses unverified email accounts even if the project was configured to skip verification.
 4. Enable TOTP in Supabase Auth. Administrators sign in, enroll/verify an authenticator from their account page, then access `/admin`. Membership comes exclusively from the private `admins` table; no signup metadata can grant it. A database owner can grant a real account membership using `insert into public.admins(user_id) values ('REAL_AUTH_USER_UUID');`.
@@ -50,14 +58,14 @@ For local development, Stripe CLI forwarding can deliver platform and connected-
 
 The current purchase flow is **local pickup only**, and only for listings that explicitly allow pickup. A reservation locks the bundle against another checkout. Accepted offers change the server-authoritative order amount. Browser success redirects never mark an order paid. The signed webhook verifies amount and currency and applies an idempotent database transition. Buyers confirm receipt; sellers or administrators can request full refunds with reversal of the seller transfer and platform fee. Only full refunds are currently modeled.
 
-A pending order can resume its existing Checkout session. A valid expiry event releases its reservation. Ambiguous Stripe failures intentionally retain the reservation; an orphan without a stored session requires operator reconciliation. Do not manually release inventory until Stripe confirms that no payment or open Checkout session exists. Automated orphan reconciliation, partial refunds, bank chargeback handling and retryable financial job processing remain release blockers.
+A pending order can resume its existing Checkout session. A valid expiry event releases its reservation. Buyers and sellers can use **Check payment status** on a pending order to reconcile it against Stripe. Known sessions must match the order reference, currency and amount. For a sessionless reservation, recovery waits at least 65 minutes, exhaustively checks Stripe's sessions created since the reservation, and releases inventory only when no matching session exists. A failed, truncated or oversized Stripe scan retains the reservation. Database release is server-only and atomic. This recovery flow has automated tests but still needs validation against real Stripe test-mode failure scenarios. Scheduled reconciliation, partial refunds, bank chargeback handling and retryable financial job processing remain release blockers.
 
 ## Stages and current scope
 
 | Stage | Implemented | Remaining validation / work |
 |---|---|---|
 | 1: Inventory and accounts | Email signup/login/recovery, session refresh, profiles/storefronts, real photo uploads, optional AI drafts with mandatory verification, multi-piece listings, category/size/brand/condition/town/price filters, favorites, saved searches and in-app new-listing alerts | Connected Supabase Auth/Storage/PostgREST end-to-end tests, real seller usability and content safety review |
-| 2: Transactions | Offer acceptance, atomic reservation, Stripe Connect test onboarding/Checkout, signed/idempotent payment webhooks, full refunds, receipt confirmation, transaction history, Stripe payout dashboard, order messaging, local pickup guidance | Real Stripe test purchase/refund/payout checks, concurrent live-database tests, orphan reconciliation, chargebacks, full shipping purchase flow |
+| 2: Transactions | Offer acceptance, atomic reservation, Stripe Connect test onboarding/Checkout, signed/idempotent payment webhooks, full refunds, receipt confirmation, transaction history, Stripe payout dashboard, order messaging, local pickup guidance | Real Stripe test purchase/refund/payout checks, concurrent live-database tests, connected validation of orphan recovery, chargebacks, full shipping purchase flow |
 | 3: Operations | Database-authorized AAL2 admin page, listing reports, withdrawal/removal of active listings, disputes, resolution controls, status audit trail, operating metrics and cost entry | Moderation staffing and escalation, suspended accounts, removal of sold/reserved harmful content, formal appeal/evidence workflows, retention/deletion procedures and operational incident drills |
 
 The UI never labels these integrations as successful without their responses. In-app alerts are not email/push notifications. Search personalization is based on explicit saved preferences, not an unimplemented recommendation model. Offers, messages, reports and search creation are also throttled at the database layer so direct API calls cannot bypass the application endpoint's write limit.

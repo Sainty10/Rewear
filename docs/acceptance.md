@@ -16,7 +16,7 @@ Use a dedicated Supabase project and Stripe test mode. These are outstanding int
 - Start two concurrent buyers against one bundle. Only one live order may exist; the winning price and commission must come from the database.
 - Pay using Stripe test payment methods. Assert amount, destination account, fee, order status and transaction history. A forged success URL, bad signature, altered amount or live-mode event must not mark an order paid.
 - Replay and reorder valid payment/expiry/refund events. Assert exactly-once durable state, no double transfer/refund, no release of paid inventory and retryable failure before any refund whose payment has not been recorded.
-- Cancel and resume Checkout; expire a session and verify release. Inject API and database failures around session creation. Implement and validate orphan reconciliation before launch.
+- Cancel and resume Checkout; expire a session and verify release. Inject API and database failures around session creation. Validate the pending-order “Check payment status” recovery against real Stripe API failures, pagination and delayed events before launch. Add scheduled reconciliation and operator alerts.
 - Issue a full refund. Verify refund status, transfer reversal, application-fee refund, seller balance, transaction history and contribution margin inputs against Stripe.
 - Verify payout eligibility, pending/available balance and test payout history through Stripe Express. Never equate an order's seller proceeds with a completed bank payout.
 - Implement chargebacks, partial refunds, payment-event recovery and operational alerts before enabling live mode. Live mode is intentionally rejected by this implementation.

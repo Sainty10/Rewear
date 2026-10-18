@@ -19,6 +19,16 @@ const valid = {
   pickup: true,
   photos: ["00000000-0000-4000-8000-000000000001"],
   verified: true,
+  items: [
+    {
+      name: "Winter layers",
+      size: "2–3 years",
+      brand: "Mixed",
+      condition: "Good",
+      quantity: 5,
+      notes: "Small mark on one sleeve",
+    },
+  ],
 };
 describe("Seller listing verification", () => {
   it("accepts a complete explicitly verified bundle", () =>

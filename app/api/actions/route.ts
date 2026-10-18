@@ -37,6 +37,19 @@ export async function POST(req: NextRequest) {
         id = result.data?.id;
         break;
       }
+      case "update_listing": {
+        const listing = listingSchema.parse(b);
+        result = await admin()
+          .from("listings")
+          .update(listing)
+          .eq("id", uuid.parse(b.listing_id))
+          .eq("seller_id", user.id)
+          .eq("status", "active")
+          .select("id")
+          .single();
+        id = result.data?.id;
+        break;
+      }
       case "profile":
         result = await client
           .from("profiles")
@@ -74,15 +87,13 @@ export async function POST(req: NextRequest) {
             max_price: z.string().regex(/^\d*$/),
           })
           .parse(b);
-        result = await client
-          .from("saved_searches")
-          .insert({
-            user_id: user.id,
-            name: z.string().min(2).max(80).parse(b.name),
-            filters: Object.fromEntries(
-              Object.entries(f).filter(([, v]) => v !== ""),
-            ),
-          });
+        result = await client.from("saved_searches").insert({
+          user_id: user.id,
+          name: z.string().min(2).max(80).parse(b.name),
+          filters: Object.fromEntries(
+            Object.entries(f).filter(([, v]) => v !== ""),
+          ),
+        });
         break;
       }
       case "delete_search":
@@ -110,31 +121,25 @@ export async function POST(req: NextRequest) {
         });
         break;
       case "message":
-        result = await client
-          .from("messages")
-          .insert({
-            order_id: uuid.parse(b.order_id),
-            sender_id: user.id,
-            body: z.string().trim().min(1).max(2000).parse(b.body),
-          });
+        result = await client.from("messages").insert({
+          order_id: uuid.parse(b.order_id),
+          sender_id: user.id,
+          body: z.string().trim().min(1).max(2000).parse(b.body),
+        });
         break;
       case "report":
-        result = await client
-          .from("reports")
-          .insert({
-            reporter_id: user.id,
-            listing_id: uuid.parse(b.listing_id),
-            reason: z.string().trim().min(10).max(2000).parse(b.reason),
-          });
+        result = await client.from("reports").insert({
+          reporter_id: user.id,
+          listing_id: uuid.parse(b.listing_id),
+          reason: z.string().trim().min(10).max(2000).parse(b.reason),
+        });
         break;
       case "dispute":
-        result = await client
-          .from("disputes")
-          .insert({
-            opened_by: user.id,
-            order_id: uuid.parse(b.order_id),
-            reason: z.string().trim().min(10).max(2000).parse(b.reason),
-          });
+        result = await client.from("disputes").insert({
+          opened_by: user.id,
+          order_id: uuid.parse(b.order_id),
+          reason: z.string().trim().min(10).max(2000).parse(b.reason),
+        });
         break;
       case "complete": {
         const a = admin();
@@ -173,30 +178,26 @@ export async function POST(req: NextRequest) {
         if (!role) throw new Error("Administrator access required");
         const a = admin();
         if (b.action === "record_acquisition") {
-          result = await a
-            .from("acquisition_costs")
-            .insert({
-              channel: z.string().min(2).max(80).parse(b.channel),
-              amount_pence: z.coerce
-                .number()
-                .int()
-                .min(0)
-                .max(100000000)
-                .parse(b.amount_pence),
-            });
+          result = await a.from("acquisition_costs").insert({
+            channel: z.string().min(2).max(80).parse(b.channel),
+            amount_pence: z.coerce
+              .number()
+              .int()
+              .min(0)
+              .max(100000000)
+              .parse(b.amount_pence),
+          });
         } else {
-          result = await a
-            .from("order_costs")
-            .upsert({
-              order_id: uuid.parse(b.order_id),
-              ...z
-                .object({
-                  processing_pence: z.coerce.number().int().min(0),
-                  shipping_subsidy_pence: z.coerce.number().int().min(0),
-                  other_pence: z.coerce.number().int().min(0),
-                })
-                .parse(b),
-            });
+          result = await a.from("order_costs").upsert({
+            order_id: uuid.parse(b.order_id),
+            ...z
+              .object({
+                processing_pence: z.coerce.number().int().min(0),
+                shipping_subsidy_pence: z.coerce.number().int().min(0),
+                other_pence: z.coerce.number().int().min(0),
+              })
+              .parse(b),
+          });
         }
         break;
       }

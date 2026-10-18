@@ -13,8 +13,8 @@ export default async function Auth({
       <p className="muted">A little community for clothes with more to give.</p>
       {!configured() ? (
         <div className="notice">
-          Accounts are not connected yet. Add the Supabase environment variables
-          and apply the database migration to enable sign up.
+          Accounts are opening soon. We are getting the first seller wardrobes
+          ready; please check back before signing up.
         </div>
       ) : (
         <>

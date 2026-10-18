@@ -1,6 +1,6 @@
 import { beforeAll, afterAll, describe, it, expect } from "vitest";
 import { PGlite } from "@electric-sql/pglite";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 let pg: PGlite;
 const seller = "00000000-0000-4000-8000-000000000001",
   buyer = "00000000-0000-4000-8000-000000000002",
@@ -29,16 +29,18 @@ create function storage.foldername(text) returns text[] language sql immutable a
 grant usage on schema public,auth,storage to authenticated,anon,service_role;
 alter default privileges in schema public grant all on tables to authenticated,anon,service_role;
 `);
-  const sql = readFileSync("supabase/migrations/20261018000000_initial.sql", "utf8").replace(
-    "create extension if not exists pgcrypto;",
-    "",
-  );
+  const sql = readdirSync("supabase/migrations")
+    .filter((f) => f.endsWith(".sql"))
+    .sort()
+    .map((f) => readFileSync("supabase/migrations/" + f, "utf8"))
+    .join("\n")
+    .replace("create extension if not exists pgcrypto;", "");
   await pg.exec(sql);
   await pg.exec(`grant select on auth.users to authenticated;grant execute on function auth.uid() to authenticated;
 insert into auth.users(id) values('${seller}'),('${buyer}'),('${stranger}');
 update profiles set charges_enabled=true,stripe_account_id='acct_test' where id='${seller}';
 insert into photos(id,owner_id,path) values('${photo}','${seller}','${seller}/photo.webp');
-insert into listings(id,seller_id,title,description,category,size,brand,condition,quantity,price_pence,location,pickup,photos,verified) values('${listing}','${seller}','Winter clothing bundle','Five winter layers with defects clearly disclosed.','Kids','2–3','Mixed','Good',5,1200,'Bristol',true,array['${photo}'::uuid],true);`);
+insert into listings(id,seller_id,title,description,category,size,brand,condition,quantity,price_pence,location,pickup,photos,verified,items) values('${listing}','${seller}','Winter clothing bundle','Five winter layers with defects clearly disclosed.','Kids','2–3','Mixed','Good',5,1200,'Bristol',true,array['${photo}'::uuid],true,'[{"name":"Layers","size":"2–3","brand":"Mixed","condition":"Good","quantity":5,"notes":"Wear disclosed"}]'::jsonb);`);
 }, 30000);
 afterAll(async () => {
   await pg.close();
@@ -217,7 +219,7 @@ describe.sequential("Saved discovery and negotiated checkout", () => {
       `insert into saved_searches(user_id,name,filters) values('${stranger}','Baby clothes','{"category":"Baby"}')`,
     );
     await pg.exec(
-      `insert into listings(id,seller_id,title,description,category,size,brand,condition,quantity,price_pence,location,pickup,photos,verified) values('${next}','${seller}','Summer clothing bundle','A summer bundle with all wear and marks disclosed.','Kids','2–3','Mixed','Good',3,1800,'Bristol',true,array['${photo}'::uuid],true);`,
+      `insert into listings(id,seller_id,title,description,category,size,brand,condition,quantity,price_pence,location,pickup,photos,verified,items) values('${next}','${seller}','Summer clothing bundle','A summer bundle with all wear and marks disclosed.','Kids','2–3','Mixed','Good',3,1800,'Bristol',true,array['${photo}'::uuid],true,'[{"name":"Layers","size":"2–3","brand":"Mixed","condition":"Good","quantity":3,"notes":"Wear disclosed"}]'::jsonb);`,
     );
     expect((await asUser(buyer, "select id from alerts")).rows).toHaveLength(1);
     expect((await asUser(stranger, "select id from alerts")).rows).toHaveLength(
@@ -259,5 +261,105 @@ describe.sequential("Saved discovery and negotiated checkout", () => {
     expect(
       (await pg.query(`select status from listings where id='${next}'`)).rows,
     ).toEqual([{ status: "active" }]);
+  });
+});
+
+describe.sequential("Bundle detail integrity and orphan recovery", () => {
+  const id = "00000000-0000-4000-8000-000000000007";
+  let orderId: string;
+  const contents = [
+    {
+      name: "T-shirts",
+      size: "2–3",
+      brand: "Mixed",
+      condition: "Good",
+      quantity: 2,
+      notes: "A small mark on one sleeve",
+    },
+  ];
+  const insert = `insert into listings(id,seller_id,title,description,category,size,brand,condition,quantity,price_pence,location,pickup,photos,verified,items) values('${id}','${seller}','Two cotton T-shirts','Two cotton tops, with all defects disclosed.','Kids','2–3','Mixed','Good',2,1000,'Bath',true,array['${photo}'::uuid],true,$1::jsonb)`;
+  it("rejects a forged total even through a direct database insert", async () => {
+    await expect(
+      pg.query(insert, [JSON.stringify([{ ...contents[0], quantity: 3 }])]),
+    ).rejects.toThrow(/Piece count/);
+  });
+  it("requires the size and brand for every clothing group", async () => {
+    await expect(
+      pg.query(insert, [JSON.stringify([{ ...contents[0], brand: "" }])]),
+    ).rejects.toThrow(/valid item/);
+  });
+  it("rejects unsupported fields in bundle contents", async () => {
+    await expect(
+      pg.query(insert, [
+        JSON.stringify([{ ...contents[0], hiddenPayload: "not allowed" }]),
+      ]),
+    ).rejects.toThrow(/valid item/);
+  });
+  it("computes the searchable unit price in PostgreSQL", async () => {
+    await asUser(
+      buyer,
+      `insert into saved_searches(user_id,name,filters) values('${buyer}','Hyphen sizes','{"size":"2-3"}')`,
+    );
+    await pg.query(insert, [JSON.stringify(contents)]);
+    expect(
+      (
+        await pg.query(
+          `select unit_price_pence::int as price from listings where id='${id}'`,
+        )
+      ).rows,
+    ).toEqual([{ price: 500 }]);
+  });
+  it("matches dash variants in search and new-inventory alerts", async () => {
+    expect(
+      (
+        await pg.query(
+          `select id from listings where id='${id}' and size_search ilike '%2-3%'`,
+        )
+      ).rows,
+    ).toHaveLength(1);
+    expect(
+      (
+        await asUser(
+          buyer,
+          `select id from alerts where listing_id='${id}' and search_id in(select id from saved_searches where name='Hyphen sizes')`,
+        )
+      ).rows,
+    ).toHaveLength(1);
+  });
+  it("prevents customers from releasing reservations through the server-only recovery function", async () => {
+    await asUser(buyer, `select reserve_bundle('${id}','pickup')`);
+    orderId = String(
+      (
+        await pg.query<{ id: string }>(
+          `select id from orders where listing_id='${id}'`,
+        )
+      ).rows[0].id,
+    );
+    await expect(
+      asUser(buyer, `select release_orphan_order('${orderId}')`),
+    ).rejects.toThrow(/permission denied/);
+  });
+  it("keeps a recent orphan reserved", async () =>
+    await expect(
+      pg.exec(`select release_orphan_order('${orderId}')`),
+    ).rejects.toThrow(/not eligible/));
+  it("never treats a recorded Stripe session as an orphan", async () => {
+    await pg.exec(
+      `update orders set created_at=now()-interval '2 hours',stripe_session_id='cs_known' where id='${orderId}'`,
+    );
+    await expect(
+      pg.exec(`select release_orphan_order('${orderId}')`),
+    ).rejects.toThrow(/not eligible/);
+  });
+  it("releases an old sessionless orphan in one transaction", async () => {
+    await pg.exec(
+      `update orders set stripe_session_id=null where id='${orderId}';select release_orphan_order('${orderId}')`,
+    );
+    expect(
+      (await pg.query(`select status from listings where id='${id}'`)).rows,
+    ).toEqual([{ status: "active" }]);
+    expect(
+      (await pg.query(`select status from orders where id='${orderId}'`)).rows,
+    ).toEqual([{ status: "expired" }]);
   });
 });

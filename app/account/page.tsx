@@ -20,11 +20,11 @@ export default async function Account({
         <h1>Your Rewear.</h1>
         <div className="panel">
           <p>
-            Connect Supabase to create an account, manage your wardrobe and save
-            your searches.
+            Accounts are opening soon. Your wardrobe, orders and saved finds
+            will live here.
           </p>
-          <Link className="button" href="/auth">
-            Account setup →
+          <Link className="button" href="/how-it-works">
+            About Rewear →
           </Link>
         </div>
       </main>
@@ -38,7 +38,7 @@ export default async function Account({
       <main className="page narrow">
         <h1>Make yourself at home.</h1>
         <p>Sign in to see your bundles, messages, orders and saved searches.</p>
-        <Link className="button" href="/auth">
+        <Link className="button" href="/how-it-works">
           Sign in →
         </Link>
       </main>
@@ -206,6 +206,14 @@ export default async function Account({
               </form>
             )}
             <div className="inline-form">
+              {o.status === "pending" && (
+                <form method="post" action="/api/orders/reconcile">
+                  <input type="hidden" name="id" value={o.id} />
+                  <button className="button light small">
+                    Check payment status
+                  </button>
+                </form>
+              )}
               {o.buyer_id === user.id && o.status === "pending" && (
                 <form method="post" action="/api/checkout">
                   <input type="hidden" name="order_id" value={o.id} />
@@ -278,6 +286,11 @@ export default async function Account({
                 {money(l.price_pence)} · {l.status}
               </p>
             </Link>
+            {l.status === "active" && (
+              <Link className="text-link" href={`/sell/${l.id}`}>
+                Edit bundle →
+              </Link>
+            )}
             {l.status === "active" && (
               <form action="/api/actions" method="post">
                 <Hidden action="remove" />
