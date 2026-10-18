@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import AppearanceControl from "./components/appearance";
+import { appearanceBootstrap } from "@/lib/appearance";
 import "@fontsource/dm-sans/400.css";
 import "@fontsource/dm-sans/500.css";
 import "@fontsource/dm-sans/600.css";
@@ -15,7 +17,13 @@ export const metadata: Metadata = {
 };
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          id="rewear-appearance-init"
+          dangerouslySetInnerHTML={{ __html: appearanceBootstrap }}
+        />
+      </head>
       <body>
         <a className="skip-link" href="#main-content">
           Skip to content
@@ -31,11 +39,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <Link href="/?category=Men">Men</Link>
           </nav>
           <div className="header-actions">
+            <AppearanceControl />
             <Link href="/account" aria-label="Your account">
               ♡ <span>My Rewear</span>
             </Link>
-            <Link className="button small" href="/sell">
-              + Sell a bundle
+            <Link
+              className="button small header-sell"
+              href="/sell"
+              aria-label="Sell a bundle"
+            >
+              <span aria-hidden="true">+</span>
+              <span className="header-sell-text">Sell a bundle</span>
             </Link>
           </div>
         </header>

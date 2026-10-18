@@ -4,6 +4,12 @@ A mobile-first family clothing bundle marketplace built with Next.js App Router,
 
 ![Rewear website preview with the brighter palette](docs/website-preview.png)
 
+[View the dark-mode preview](docs/website-dark.png)
+
+## Appearance
+
+Use the **Appearance** selector in the header to choose **Light**, **Dark** or **System**. System is the default and follows device changes. The choice is stored locally on that browser/device and persists across visits; no account is required. When storage is blocked, the choice works for the current page but cannot be reliably retained across reloads. The theme is applied before page painting, and shared styles cover discovery, forms, listings, account/administrator panels and messages. Automated contrast scans cover the publicly accessible pages; connected authenticated flows still require the acceptance checks below.
+
 ## Website launch
 
 See [the exact website-launch steps](docs/website-launch.md). Vercel hosts the Next.js website; Supabase provides accounts, PostgreSQL and photo storage. The `vercel.json` configuration is included. Deployment still requires signing into the account that owns the hosting project.

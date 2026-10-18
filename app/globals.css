@@ -1587,3 +1587,194 @@ footer .muted {
 .steps > div > span {
   color: #657656;
 }
+/* Appearance is device-local and applies to all marketplace pages. */
+:root {
+  color-scheme: light;
+  --surface: #fff;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --cream: #111c18;
+  --surface: #1c2b24;
+  --ink: #e9f3e6;
+  --muted: #b6c7b5;
+  --line: #405344;
+}
+.appearance-control {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+}
+.appearance-control > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.appearance-control select {
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 7px;
+  min-height: 42px;
+  max-width: 88px;
+  font: inherit;
+  font-size: 12px;
+}
+:root[data-theme="dark"] .panel,
+:root[data-theme="dark"] .listing-card,
+:root[data-theme="dark"] .info-grid article,
+:root[data-theme="dark"] .calculator-form {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--line);
+}
+:root[data-theme="dark"] .stack input,
+:root[data-theme="dark"] .stack select,
+:root[data-theme="dark"] .stack textarea,
+:root[data-theme="dark"] .inline-form input,
+:root[data-theme="dark"] .inline-form select,
+:root[data-theme="dark"] .listing-sort select {
+  background: #142019;
+  color: var(--ink);
+  border-color: #65816a;
+}
+:root[data-theme="dark"] input::placeholder,
+:root[data-theme="dark"] textarea::placeholder {
+  color: #a8bba8;
+  opacity: 1;
+}
+:root[data-theme="dark"] .hero-copy > p,
+:root[data-theme="dark"] .hero-proof,
+:root[data-theme="dark"] .trust-strip,
+:root[data-theme="dark"] .per-piece,
+:root[data-theme="dark"] .bundle-content-row p,
+:root[data-theme="dark"] .steps > div > span {
+  color: #b6cbb0;
+}
+:root[data-theme="dark"] .hero-copy h1 em,
+:root[data-theme="dark"] .page > .eyebrow,
+:root[data-theme="dark"] .logo span {
+  color: #b7ed83;
+}
+:root[data-theme="dark"] .announcement,
+:root[data-theme="dark"] .category,
+:root[data-theme="dark"] .fee-calculator,
+:root[data-theme="dark"] .hero-art,
+:root[data-theme="dark"] .quantity,
+:root[data-theme="dark"] .contents-total,
+:root[data-theme="dark"] .bundle-contents h2 {
+  color: #163e32;
+}
+:root[data-theme="dark"] .fee-calculator {
+  border-color: #bba855;
+}
+:root[data-theme="dark"] .empty-state,
+:root[data-theme="dark"] .pricing-summary,
+:root[data-theme="dark"] .notice,
+:root[data-theme="dark"] .metric {
+  background: #243a2b;
+  color: var(--ink);
+  border-color: #6d914f;
+}
+:root[data-theme="dark"] .empty-state small {
+  color: #b6cbb0;
+}
+:root[data-theme="dark"] .empty-icon {
+  background: #d9f792;
+  color: #163e32;
+}
+:root[data-theme="dark"] .pricing-summary .row {
+  border-color: #536e48;
+}
+:root[data-theme="dark"] .notice.error {
+  background: #44291f;
+  color: #ffd4bf;
+  border-color: #e68f67;
+}
+:root[data-theme="dark"] .notice.success {
+  background: #24402d;
+  color: #d8f5d1;
+}
+:root[data-theme="dark"] .filters {
+  background: var(--surface);
+  border-color: var(--line);
+}
+:root[data-theme="dark"] .filters input,
+:root[data-theme="dark"] .filters select,
+:root[data-theme="dark"] .filters .search-label {
+  background: #142019;
+  color: var(--ink);
+}
+:root[data-theme="dark"] .quick-sizes a {
+  background: var(--surface);
+  border-color: #65816a;
+}
+:root[data-theme="dark"] .quick-sizes a:hover,
+:root[data-theme="dark"] .quick-sizes a[aria-current="true"] {
+  background: #dafa9a;
+  color: #163e32;
+}
+:root[data-theme="dark"] .bundle-group {
+  background: #2c2637;
+  border-color: #84709b;
+}
+:root[data-theme="dark"] .bundle-group .remove-group {
+  color: #ffbb9b;
+}
+:root[data-theme="dark"] .seller-steps button {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: #65816a;
+}
+:root[data-theme="dark"] .seller-steps button[aria-current="step"] {
+  background: #dafa9a;
+  color: #163e32;
+}
+:root[data-theme="dark"] .badge {
+  background: #385035;
+  color: #e2f3d4;
+}
+:root[data-theme="dark"] .listing-photo {
+  background: #2a382e;
+}
+:root[data-theme="dark"] .message {
+  border-color: #91b974;
+}
+:root[data-theme="dark"] .mobile-nav {
+  background: #111c18f5;
+}
+:root[data-theme="dark"] :focus-visible {
+  outline-color: #ffc594;
+}
+:root[data-theme="dark"] a.button.light {
+  color: #314632;
+}
+@media (max-width: 700px) {
+  .header-actions {
+    gap: 9px;
+  }
+  .appearance-control select {
+    width: 76px;
+    min-height: 44px;
+    font-size: 12px;
+    padding: 9px 5px;
+  }
+}
+@media (max-width: 420px) {
+  .header-sell .header-sell-text {
+    display: none;
+  }
+  .header-actions .header-sell {
+    gap: 0;
+    width: 44px;
+    min-height: 44px;
+    padding: 8px;
+    font-size: 22px;
+  }
+}
