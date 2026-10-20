@@ -10,6 +10,10 @@ A mobile-first family clothing bundle marketplace built with Next.js App Router,
 
 Use the **Appearance** selector in the header to choose **Light**, **Dark** or **System**. System is the default and follows device changes. The choice is stored locally on that browser/device and persists across visits; no account is required. When storage is blocked, the choice works for the current page but cannot be reliably retained across reloads. The theme is applied before page painting, and shared styles cover discovery, forms, listings, account/administrator panels and messages. Automated contrast scans cover the publicly accessible pages; connected authenticated flows still require the acceptance checks below.
 
+## iPhone preview with Expo Go
+
+A separate Expo project lives in [`mobile/`](mobile/README.md). It displays the hosted website inside a native WebView; it is not a native marketplace rewrite or an App Store release. Website and mobile dependencies stay separate. The mobile README includes exact Windows PowerShell startup commands, version compatibility, website verification status, login limitations and device checks. This branch preserves the separate PWA work in PR #1 without merging it.
+
 ## Website launch
 
 See [the exact website-launch steps](docs/website-launch.md). Vercel hosts the Next.js website; Supabase provides accounts, PostgreSQL and photo storage. The `vercel.json` configuration is included. Deployment still requires signing into the account that owns the hosting project.

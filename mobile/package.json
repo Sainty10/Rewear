@@ -1,0 +1,43 @@
+{
+  "name": "rewear-mobile-preview",
+  "version": "0.1.0",
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start --go",
+    "start:tunnel": "expo start --go --tunnel",
+    "start:lan": "expo start --go --lan",
+    "ios": "expo start --go --ios",
+    "android": "expo start --go --android",
+    "typecheck": "tsc --noEmit",
+    "lint": "expo lint",
+    "test": "node --experimental-strip-types --test tests/navigation.test.mjs tests/load-state.test.mjs",
+    "export:ios": "expo export --platform ios --output-dir dist-ios",
+    "check:website": "node --experimental-strip-types scripts/check-website.mjs"
+  },
+  "dependencies": {
+    "expo": "~54.0.36",
+    "expo-constants": "~18.0.14",
+    "expo-linking": "~8.0.12",
+    "expo-router": "~6.0.24",
+    "expo-splash-screen": "~31.0.13",
+    "expo-status-bar": "~3.0.9",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-safe-area-context": "~5.6.0",
+    "react-native-screens": "~4.16.0",
+    "react-native-webview": "13.15.0"
+  },
+  "devDependencies": {
+    "@expo/ngrok": "^4.1.3",
+    "@types/react": "~19.1.0",
+    "eslint": "^9",
+    "eslint-config-expo": "~10.0.0",
+    "typescript": "~5.9.2"
+  },
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  }
+}
