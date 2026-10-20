@@ -6,7 +6,7 @@ A mobile-first family clothing bundle marketplace built with Next.js App Router,
 
 [View the dark-mode preview](docs/website-dark.png)
 
-## Appearance
+## Phone app\n\nRewear now includes home-screen installation support, app icons, a standalone display and an offline reconnect page. Open **Get Rewear on your phone** in the footer or visit **/install**. See [phone-app setup and validation](docs/mobile-app.md). This is an installable web app; app-store distribution and real-device verification are separate steps. The marketplace remains in its existing test stage.\n\n## Appearance
 
 Use the **Appearance** selector in the header to choose **Light**, **Dark** or **System**. System is the default and follows device changes. The choice is stored locally on that browser/device and persists across visits; no account is required. When storage is blocked, the choice works for the current page but cannot be reliably retained across reloads. The theme is applied before page painting, and shared styles cover discovery, forms, listings, account/administrator panels and messages. Automated contrast scans cover the publicly accessible pages; connected authenticated flows still require the acceptance checks below.
 
