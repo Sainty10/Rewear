@@ -39,3 +39,10 @@ Use the Windows commands in the mobile README to start a real authenticated tunn
 4. Photo library selection and upload work against the configured website. Test denial/regrant of Expo Go photo/camera permissions.
 5. Test-mode Stripe Checkout/Connect opens in the browser. Verify signed webhook outcomes in orders after returning; do not create duplicate payments to compensate for a stale page.
 6. Website service readiness and all production marketplace acceptance gates remain independent of this wrapper.
+
+## Delivery
+
+- Implementation committed and pushed to `origin/codex/rewear-expo-go` (`5eb5a341918eebb5f325fa183c503fba259c233d`). Main and PR #1 heads remain unchanged.
+- Branch archive downloaded successfully: HTTP 200, valid ZIP, mobile project and dependency lockfile present, no node_modules or local .env files.
+- Draft PR creation attempted with both GitHub GraphQL (`gh pr create --draft`) and REST (`gh api --method POST .../pulls`, draft true). Both were denied with Forbidden by this environment's API network access. A new PR has **not** been created.
+- Open https://github.com/Sainty10/Rewear/pull/new/codex/rewear-expo-go and choose **Create draft pull request**. Suggested description is in [pull-request.md](pull-request.md). No merge or production settings changes were performed.

@@ -1,0 +1,7 @@
+Adds a separate `mobile/` Expo Go app that loads Rewear's existing HTTPS website in a WebView, replacing the failed Snack preview. Targets SDK 54 per Expo's current physical-iPhone/App Store compatibility note; includes pinned SDK-compatible WebView/safe-area packages, Expo Router, explicit loading/retry, GET-only recovery and safe external-link handling. This is a website wrapper, not a native rewrite or store release.
+
+PR #1 remains a separate, unmerged draft. Website application/payment code, root dependency lockfile and production settings are unchanged; root TypeScript excludes the mobile project.
+
+Validation: mobile frozen install, typecheck, lint, 12 tests, local SDK dependency check, iOS Hermes export (982 modules), and local Metro iOS manifest/dev bundle HTTP checks pass. Website's 102 tests and production build pass. Expo Doctor: 16/18; 2 remote checks blocked. Website verification was blocked by the workspace CONNECT proxy (403), and the ngrok tunnel timed out. No iPhone device/login/upload/payment test or public Expo QR is claimed.
+
+Windows setup and exact commands: `mobile/README.md`. Install Node 24 LTS, download this branch, open PowerShell in `mobile/`, run `npm.cmd ci`, `npx.cmd expo login`, then `npm.cmd run start:tunnel`; sign into the same Expo account on iPhone and scan the actual QR. `start:lan` is the same-Wi-Fi fallback. Full evidence and remaining checks: `mobile/docs/verification.md`.
