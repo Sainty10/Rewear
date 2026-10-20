@@ -20,7 +20,7 @@ async function asUser(id: string, sql: string) {
 beforeAll(async () => {
   pg = new PGlite();
   await pg.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create schema storage;
-create table auth.users(id uuid primary key,raw_user_meta_data jsonb default '{}');
+create table auth.users(id uuid primary key,raw_user_meta_data jsonb default '{}',email_confirmed_at timestamptz);
 create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
 create function auth.jwt() returns jsonb language sql stable as $$select jsonb_build_object('aal',coalesce(current_setting('request.jwt.claim.aal',true),'aal1'))$$;
 create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
@@ -37,7 +37,7 @@ alter default privileges in schema public grant all on tables to authenticated,a
     .replace("create extension if not exists pgcrypto;", "");
   await pg.exec(sql);
   await pg.exec(`grant select on auth.users to authenticated;grant execute on function auth.uid() to authenticated;
-insert into auth.users(id) values('${seller}'),('${buyer}'),('${stranger}');
+insert into auth.users(id,email_confirmed_at) values('${seller}',now()),('${buyer}',now()),('${stranger}',now());
 update profiles set charges_enabled=true,stripe_account_id='acct_test' where id='${seller}';
 insert into photos(id,owner_id,path) values('${photo}','${seller}','${seller}/photo.webp');
 insert into listings(id,seller_id,title,description,category,size,brand,condition,quantity,price_pence,location,pickup,photos,verified,items) values('${listing}','${seller}','Winter clothing bundle','Five winter layers with defects clearly disclosed.','Kids','2–3','Mixed','Good',5,1200,'Bristol',true,array['${photo}'::uuid],true,'[{"name":"Layers","size":"2–3","brand":"Mixed","condition":"Good","quantity":5,"notes":"Wear disclosed"}]'::jsonb);`);
@@ -74,6 +74,73 @@ describe.sequential(
       await expect(
         asUser(seller, `select reserve_bundle('${listing}','pickup')`),
       ).rejects.toThrow(/unavailable/));
+    it("requires a signed-in account even for a direct reservation RPC", async () => {
+      await expect(
+        asUser("", `select reserve_bundle('${listing}','pickup')`),
+      ).rejects.toThrow(/Sign in required/);
+    });
+    it("rejects unverified email accounts through a direct reservation RPC", async () => {
+      await pg.exec(
+        `update auth.users set email_confirmed_at=null where id='${buyer}'`,
+      );
+      try {
+        await expect(
+          asUser(buyer, `select reserve_bundle('${listing}','pickup')`),
+        ).rejects.toThrow(/Verify your email/);
+        expect(
+          (await pg.query(`select status from listings where id='${listing}'`))
+            .rows,
+        ).toEqual([{ status: "active" }]);
+        expect((await pg.query("select id from orders")).rows).toHaveLength(0);
+      } finally {
+        await pg.exec(
+          `update auth.users set email_confirmed_at=now() where id='${buyer}'`,
+        );
+      }
+    });
+    it.each(["'shipping'", "'courier'", "null"])(
+      "rejects unsupported delivery %s without reserving inventory",
+      async (delivery) => {
+        await expect(
+          asUser(buyer, `select reserve_bundle('${listing}',${delivery})`),
+        ).rejects.toThrow(/Only local pickup/);
+        expect(
+          (await pg.query(`select status from listings where id='${listing}'`))
+            .rows,
+        ).toEqual([{ status: "active" }]);
+        expect((await pg.query("select id from orders")).rows).toHaveLength(0);
+      },
+    );
+    it("requires the listing to explicitly allow local pickup", async () => {
+      await pg.exec(`update listings set pickup=false where id='${listing}'`);
+      try {
+        await expect(
+          asUser(buyer, `select reserve_bundle('${listing}','pickup')`),
+        ).rejects.toThrow(/Invalid delivery option/);
+        expect((await pg.query("select id from orders")).rows).toHaveLength(0);
+      } finally {
+        await pg.exec(`update listings set pickup=true where id='${listing}'`);
+      }
+    });
+    it("cannot bypass the action quota with a direct reservation RPC", async () => {
+      await pg.exec(`insert into usage_limits(user_id,action,window_start,requests)
+        values('${buyer}','action',date_trunc('hour',now()),100)
+        on conflict(user_id,action,window_start) do update set requests=100`);
+      try {
+        await expect(
+          asUser(buyer, `select reserve_bundle('${listing}','pickup')`),
+        ).rejects.toThrow(/Hourly request limit/);
+        expect(
+          (await pg.query(`select status from listings where id='${listing}'`))
+            .rows,
+        ).toEqual([{ status: "active" }]);
+        expect((await pg.query("select id from orders")).rows).toHaveLength(0);
+      } finally {
+        await pg.exec(
+          `delete from usage_limits where user_id='${buyer}' and action='action'`,
+        );
+      }
+    });
     it("reserves inventory with authoritative price and fee", async () => {
       await asUser(buyer, `select reserve_bundle('${listing}','pickup')`);
       const { rows } = await pg.query(
@@ -82,6 +149,13 @@ describe.sequential(
       expect(rows).toEqual([
         { amount_pence: 1200, commission_pence: 120, status: "pending" },
       ]);
+      expect(
+        (
+          await pg.query(`select requests from usage_limits
+        where user_id='${buyer}' and action='action'
+        and window_start=date_trunc('hour',now())`)
+        ).rows,
+      ).toEqual([{ requests: 1 }]);
     });
     it("prevents a second buyer from purchasing reserved inventory", async () =>
       await expect(

@@ -1,6 +1,6 @@
 # Put Rewear on the web
 
-The chosen stack is Vercel for the website and Supabase for its accounts, PostgreSQL database and private photo storage. No app-store release is needed. This repository includes the Vercel configuration, but it has not been deployed by the coding environment: no hosting account or deployment credentials are connected.
+The chosen stack is Vercel for the website and Supabase for its accounts, PostgreSQL database and private photo storage. No app-store release is needed. The previously supplied website is https://rewear-wine-rho.vercel.app and the supplied Supabase project origin is https://riyvgayywghjkpvrbmpz.supabase.co. The `/rest/v1/` path is not part of the project URL. This coding environment has not verified the hosted website or connected to either account; see [the current launch record](web-launch-status.md).
 
 ## First: get a public website address
 
@@ -22,7 +22,8 @@ Account signup and checkout remain unavailable at this point. This publishes the
 2. In Supabase's **SQL Editor**, run these files in order, once each:
    - `supabase/migrations/20261018000000_initial.sql`
    - `supabase/migrations/20261018010000_bundle_details_and_recovery.sql`
-   If the first migration was already applied, run only the second. Do not run the first migration again over an existing schema.
+   - `supabase/migrations/20261020000000_pickup_reservation_guards.sql`
+   Apply only pending migrations. Do not run the initial migration again over an existing schema. The latest migration closes direct reservation API bypasses for email verification, pickup-only delivery and request quotas.
 3. Copy the project URL and legacy anon JWT key from the project's API settings into Vercel environment variables named `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 4. Add the legacy `service_role` API key as `SUPABASE_SERVICE_ROLE_KEY` in Vercel. It is secret: never paste it into chat, GitHub, a public variable, or a client-side file.
 5. In Supabase Auth URL configuration, set **Site URL** to the website's exact HTTPS address and allow the `/auth/callback` redirect and `/auth/callback?next=/account/password` reset callback. Keep email confirmation enabled, set a strong password policy and configure SMTP before real user signup.

@@ -38,7 +38,7 @@ export default async function Account({
       <main className="page narrow">
         <h1>Make yourself at home.</h1>
         <p>Sign in to see your bundles, messages, orders and saved searches.</p>
-        <Link className="button" href="/how-it-works">
+        <Link className="button" href="/auth">
           Sign in →
         </Link>
       </main>
